@@ -1,12 +1,12 @@
 pipeline {
     agent {
-        docker{
+        docker {
             image 'postman/newman:latest'
             args '-u root --entrypoint='
         }
     }
     stages {
-         stage('Check version nodejs') {
+        stage('Check version nodejs') {
             steps {
                 sh 'newman --version'
                 sh 'npm --version'
@@ -19,10 +19,20 @@ pipeline {
         }
         stage('Lancer le test') {
             steps {
-                sh'npx newman run collections/collection.json -e env/preprod.json -r cli,htmlextra'
+                sh '''
+                    npx newman run collections/collection.json \
+                        -e env/preprod.json \
+                        -r cli,htmlextra \
+                        --reporter-htmlextra-export reports/rapport.html
+                '''
             }
         }
-       
-         
+    }
+    post {
+        success {
+            // 1. Archive le rapport (téléchargeable depuis la page du build)
+            archiveArtifacts artifacts: 'reports/*.html',allowEmptyArchive: true
+
+        }
     }
 }
